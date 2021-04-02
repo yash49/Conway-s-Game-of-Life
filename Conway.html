@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style type="text/css">
+        button
+        {
+            padding:5px;
+            margin:5px;
+            color:white;
+            background: #3b67dc;
+            border: none;
+        }
+    </style>
+</head>         
+<body>
+
+
+<center>
+
+<button onclick="clearSimulation();">CLEAR</button>
+<button onclick="nextSimulation();">NEXT</button>
+<button onclick="startSimulation();">START</button>
+<button onclick="stopSimulation();">STOP</button><br><br>
+<canvas id="myCanvas" style="border:1px solid #d3d3d3;background:#888888;"></canvas>
+
+</center>
+
+<script>
+
+let drag = false;
+document.addEventListener(
+    'mousedown', () => drag = true);
+
+document.addEventListener(
+    'mouseup', () => drag = false);
+
+var c = document.getElementById("myCanvas");
+c.addEventListener("mousemove", function(e)
+{
+    if(drag)
+    getMousePosition(c, e);
+});
+
+var ctx = c.getContext("2d");
+
+var h = 900;
+var pix = 45;
+var speed = 100;
+
+c.height = h;
+c.width = h;
+
+var color = ["white","#222222"];
+
+var grid = new Array(h/pix);
+for(var i=0;i<h/pix;i++)
+{
+	grid[i] = new Array(h/pix);
+}
+
+for(var i=0;i<h/pix;i++)
+{
+    for(var j=0;j<h/pix;j++)
+    {
+        grid[i][j] = 0;
+    }
+}
+
+for(var i=0;i<h/pix;i++)
+{
+    for(var j=0;j<h/pix;j++)
+    {
+        var yo = grid[i][j];
+        ctx.fillStyle = color[yo];
+        var x = i*pix+1;
+        var y = j*pix+1;
+        ctx.fillRect(x,y,pix-2, pix-2);
+    }   
+}
+
+function clearSimulation()
+{
+
+    for(var i=0;i<h/pix;i++)
+    {
+        for(var j=0;j<h/pix;j++)
+        {
+            grid[i][j] = 0;
+        }
+    }
+
+    for(var i=0;i<h/pix;i++)
+    {
+        for(var j=0;j<h/pix;j++)
+        {
+            var yo = grid[i][j];
+            ctx.fillStyle = color[yo];
+            var x = i*pix+1;
+            var y = j*pix+1;
+            ctx.fillRect(x,y,pix-2, pix-2);
+        }   
+    }
+}
+
+// Any live cell with fewer than two live neighbours dies, as if by underpopulation.
+// Any live cell with two or three live neighbours lives on to the next generation.
+// Any live cell with more than three live neighbours dies, as if by overpopulation.
+// Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+
+function nextGen(grid,i,j)
+{
+    var sum = 0;
+    for(var x=-1;x<=1;x++)
+    {
+        for(var y=-1;y<=1;y++)
+        {
+            sum+=grid[(x+i+grid.length)%grid.length][(y+j+grid[0].length)%grid[0].length];
+        }   
+    }
+    sum-=grid[i][j];
+    //console.log(sum);
+    if(grid[i][j]==1 && sum<2)
+        return 0;
+    if(grid[i][j]==1 && sum>3)
+        return 0;
+    if(grid[i][j]==1 && (sum==2||sum==3))
+        return 1;
+    if(grid[i][j]==0 && sum==3)
+        return 1;
+    return grid[i][j];
+}
+
+var sim;
+
+function stopSimulation()
+{
+    //console.log(nextGen(grid,2,1));
+    if(sim!=null)
+        clearInterval(sim);
+    sim = null;
+}
+
+function startSimulation()
+{
+    if(sim==null)
+    {
+        sim = setInterval(()=>{
+            //console.log(grid);
+            var next = new Array(grid.length);
+
+            for(var i=0;i<h/pix;i++)
+            {
+                next[i]=new Array(grid.length);
+                for(var j=0;j<h/pix;j++)
+                {
+                    next[i][j] =  nextGen(grid,i,j);
+                }
+            }
+            //console.log(grid);
+            for(var i=0;i<h/pix;i++)
+            {
+                for(var j=0;j<h/pix;j++)
+                {
+                    var yo = next[i][j];
+                    ctx.fillStyle = color[yo];
+                    var x = i*pix+1;
+                    var y = j*pix+1;
+                    ctx.fillRect(x,y,pix-2, pix-2);
+                }   
+            }
+            grid = next;
+            
+        },speed);
+    }
+}
+
+function nextSimulation()
+{
+    
+        //console.log(grid);
+        var next = new Array(grid.length);
+
+        for(var i=0;i<h/pix;i++)
+        {
+            next[i]=new Array(grid.length);
+            for(var j=0;j<h/pix;j++)
+            {
+                next[i][j] =  nextGen(grid,i,j);
+            }
+        }
+        //console.log(grid);
+        for(var i=0;i<h/pix;i++)
+        {
+            for(var j=0;j<h/pix;j++)
+            {
+                var yo = next[i][j];
+                ctx.fillStyle = color[yo];
+                var x = i*pix+1;
+                var y = j*pix+1;
+                ctx.fillRect(x,y,pix-2, pix-2);
+            }   
+        }
+        grid = next;
+        
+   
+}
+
+function getMousePosition(canvas, event) {
+    let rect = canvas.getBoundingClientRect();
+    let x = event.clientX - rect.left;
+    let y = event.clientY - rect.top;
+     x/=pix;
+    y/=pix;
+    x=Math.floor(x);
+    y=Math.floor(y);
+    ctx.fillStyle = color[1];
+    grid[x][y]=1;
+    ctx.fillRect(x*pix+1,y*pix+1,pix-2, pix-2);
+}
+
+
+
+
+
+</script>
+
+</body>
+</html>
